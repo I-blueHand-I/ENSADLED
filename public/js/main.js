@@ -13,12 +13,13 @@ const socket = io();
 
 socket.on(
   "join-pixel-data",
-  ({ pixelData, pixelSize, canvasWidth, canvasHeight }) => {
+  ({ colorPixel, timers, pixelSize, canvasWidth, canvasHeight }) => {
     pixelSizeFront = pixelSize;
     firstDrawPixel({
       canvasEl,
       ctx,
-      pixelData,
+      colorPixel,
+      timers,
       pixelSize,
       canvasWidth,
       canvasHeight,
@@ -37,22 +38,18 @@ socket.on(
   }
 );
 
-socket.on("update-pixel-data", (pixelData) => {
-  console.table("pixelData", pixelData);
+socket.on("update-pixel-data", ({colorPixel, timers}) => {
+  //console.table("pixelData", pixelData);
   drawPixel({
     ctx,
-    pixelData,
-    pixelSize: pixelSizeFront,
+    colorPixel,
+    timers,
+    pixelSize : pixelSizeFront,
     canvasWidth: canvasEl.width,
     canvasHeight: canvasEl.height,
   });
 });
 
-socket.on("cannot-update", () => {
-  alert(
-    "Calme-toi mon ami ! Attends un peu, avant de dessiner un nouveau pixel :)"
-  );
-});
 
 onClickColor({
   callback: (color) => {

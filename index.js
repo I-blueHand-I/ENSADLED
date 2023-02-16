@@ -1,5 +1,5 @@
-import http from "http";
 import express from "express";
+import http from "http";
 import { Server } from "socket.io";
 
 import generatePixelData from "./src/generatePixelData.js";
@@ -12,13 +12,13 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Game settings
-const pixelSize = 10;
-const canvasWidth = 900;
-const canvasHeight = 600;
+const pixelSize = 40;
+const canvasWidth = pixelSize*21;
+const canvasHeight = pixelSize*21;
 
-const REST_TIME_MS = 10000;
+//const REST_TIME_MS = 1000;
 
-const updateTable = {};
+//const updateTable = {};
 
 /**
  * {
@@ -33,7 +33,11 @@ let pixelData = generatePixelData({
   height: canvasHeight,
 });
 
-// console.table(pixelData);
+let colorPixel = pixelData.pixelColor; //from return generatepixeldata : colors
+let timers = pixelData.timers; //from return generatepixeldata : timers
+
+//console.table(timers);
+//console.table(colorPixel);
 
 // Server routes
 app.use(express.static("public"));
@@ -45,7 +49,8 @@ io.on("connection", (socket) => {
       ? socket.conn.remoteAddress
       : socket.id;
   socket.emit("join-pixel-data", {
-    pixelData,
+    colorPixel,
+    timers,
     pixelSize,
     canvasHeight,
     canvasWidth,
@@ -55,46 +60,24 @@ io.on("connection", (socket) => {
     if (
       color?.length &&
       rowIndex >= 0 &&
-      rowIndex < pixelData.length &&
+      rowIndex < colorPixel.length &&
       colIndex >= 0 &&
-      colIndex < pixelData[0].length
+      colIndex < colorPixel[0].length
     ) {
-      let canUpdatePixel = false;
-
-      // console.log("#1");
-      if (!updateTable.hasOwnProperty(id)) {
-        // console.log("#2");
-        canUpdatePixel = true;
-      } else {
-        // console.log("#3");
-        const ms = new Date(updateTable[id]).getTime();
-        const elapsedMs = new Date().getTime() - ms;
-        if (elapsedMs >= REST_TIME_MS) {
-          // console.log("#4");
-          canUpdatePixel = true;
-        }
-      }
-
-      if (!canUpdatePixel) {
-        // console.log("#5");
-        socket.emit("cannot-update");
-        return;
-      }
-
-      // console.log("#6");
-
-      updateTable[id] = new Date().getTime();
-
+      
       drawPixel({
-        pixelData,
+        colorPixel,
+        timers,
         color,
         rowIndex,
         colIndex,
       });
+      //console.table(colorPixel);
+      //console.table(timers);
 
+      
       // console.log("pixelData", pixelData);
-
-      io.emit("update-pixel-data", pixelData);
+      io.emit("update-pixel-data", {colorPixel, timers});
     }
   });
 });
@@ -103,3 +86,5 @@ io.on("connection", (socket) => {
 server.listen(3000, () => {
   console.log("Server started");
 });
+
+
